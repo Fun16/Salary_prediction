@@ -34,13 +34,19 @@ def clean_education(x):
 
 @st.cache_data
 def load_data():
-    s3 = boto3.client('s3')
-    bucket_name = 'survet-results-public'
-    file_key = 'survey_results_public.csv'  # or just filename if no folder
+    session = boto3.Session(
+        aws_access_key_id=st.secrets["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=st.secrets["AWS_SECRET_ACCESS_KEY"],
+        region_name=st.secrets["AWS_REGION"]
+    )
+
+    s3 = session.client("s3")
+    bucket_name = st.secrets["S3_BUCKET_NAME"]
+    file_key = st.secrets["S3_FILE_KEY"]
 
     obj = s3.get_object(Bucket=bucket_name, Key=file_key)
     data = obj['Body'].read().decode('utf-8')
-    df = pd.read_csv(StringIO(data))
+    df = pd.read_csv(StringIO(data))    
     
     df = df[["Country", "EdLevel", "YearsCodePro", "Employment", "ConvertedCompYearly"]]
     df = df[df["ConvertedCompYearly"].notnull()]
