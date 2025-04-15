@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import boto3
+from io import StringIO
 import matplotlib.pyplot as plt
 
 def shorten_categories(categories, cutoff):
@@ -32,7 +34,14 @@ def clean_education(x):
 
 @st.cache_data
 def load_data():
-    df = pd.read_csv("survey_results_public.csv")
+    s3 = boto3.client('s3')
+    bucket_name = 'survet-results-public'
+    file_key = 'survey_results_public.csv'  # or just filename if no folder
+
+    obj = s3.get_object(Bucket=bucket_name, Key=file_key)
+    data = obj['Body'].read().decode('utf-8')
+    df = pd.read_csv(StringIO(data))
+    
     df = df[["Country", "EdLevel", "YearsCodePro", "Employment", "ConvertedCompYearly"]]
     df = df[df["ConvertedCompYearly"].notnull()]
     df = df.dropna()
